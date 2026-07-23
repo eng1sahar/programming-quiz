@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>كويز المؤشرات — المحاضرة 1 | برمجة 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800;900&family=Tajawal:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #eef2f4;
+    --bg-2: #e4eaee;
+    --surface: #ffffff;
+    --surface-soft: #f5f7f9;
+    --code-bg: #182333;
+    --code-text: #cfe8e3;
+    --code-accent: #7fd9c4;
+    --ink: #1c2536;
+    --ink-soft: #5c6779;
+    --ink-faint: #93a0b2;
+    --border: #dde3ea;
+    --accent: #0e7c86;
+    --accent-ink: #0a5a62;
+    --accent-soft: #e2f3f2;
+    --accent-2: #3454d1;
+    --correct: #1f9d6b;
+    --correct-bg: #e6f7ef;
+    --correct-border: #a9e4c6;
+    --wrong: #e0483a;
+    --wrong-bg: #fdecea;
+    --wrong-border: #f3bcb5;
+    --radius-lg: 22px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+    --shadow: 0 20px 45px -20px rgba(28,37,54,0.22), 0 4px 10px -4px rgba(28,37,54,0.08);
+    --shadow-sm: 0 6px 16px -8px rgba(28,37,54,0.18);
+  }
+
+  *{ box-sizing:border-box; }
+
+  html,body{
+    margin:0; padding:0; min-height:100%;
+  }
+
+  body{
+    font-family:'Tajawal', sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1100px 520px at 85% -8%, #d9ecec 0%, transparent 60%),
+      radial-gradient(900px 500px at 5% 105%, #e4e6f7 0%, transparent 55%),
+      linear-gradient(180deg, var(--bg), var(--bg-2));
+    background-attachment: fixed;
+    min-height:100vh;
+    padding: 36px 18px 60px;
+    line-height:1.65;
+  }
+
+  .wrap{
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Header ---------- */
+  header.top{
+    text-align:center;
+    margin-bottom: 26px;
+  }
+
+  .eyebrow-top{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    letter-spacing:.04em;
+    color:var(--accent-ink);
+    background: var(--accent-soft);
+    border: 1px solid #bfe3e0;
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom:16px;
+  }
+  .eyebrow-top .dot{
+    width:6px; height:6px; border-radius:50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(14,124,134,.18);
+  }
+
+  h1.title{
+    font-family:'Cairo', sans-serif;
+    font-weight:900;
+    font-size: clamp(26px, 5vw, 36px);
+    color: var(--ink);
+    margin: 0 0 8px;
+    letter-spacing:-0.01em;
+  }
+  h1.title span{ color:var(--accent); }
+
+  p.subtitle{
+    color: var(--ink-soft);
+    font-size: 15px;
+    margin:0;
+  }
+
+  /* ---------- Memory strip progress ---------- */
+  .mem-strip-shell{
+    background: var(--surface);
+    border:1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px 12px;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow-sm);
+  }
+  .mem-strip-label{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color: var(--ink-faint);
+    margin-bottom:9px;
+    direction:ltr;
+    text-align:left;
+  }
+  .mem-strip-label b{ color: var(--accent-ink); font-weight:600; }
+
+  .mem-strip{
+    display:flex;
+    gap:4px;
+    direction:ltr;
+  }
+  .cell{
+    flex:1;
+    height:22px;
+    border-radius:5px;
+    background: var(--surface-soft);
+    border:1px solid var(--border);
+    position:relative;
+    transition: background .35s ease, border-color .35s ease, transform .2s ease;
+  }
+  .cell.current{
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    transform: scaleY(1.15);
+  }
+  .cell.correct{ background: var(--correct); border-color: var(--correct); }
+  .cell.wrong{ background: var(--wrong); border-color: var(--wrong); }
+  .cell.seen{ background: #c9d3dd; border-color:#c9d3dd; }
+
+  /* ---------- Quiz Card ---------- */
+  .card{
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    overflow:hidden;
+    animation: rise .45s cubic-bezier(.2,.8,.2,1);
+  }
+
+  @keyframes rise{
+    from{ opacity:0; transform: translateY(14px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  .card-top{
+    padding: 22px 26px 0;
+  }
+
+  .meta-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom: 14px;
+    flex-wrap:wrap;
+  }
+
+  .q-count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    color: var(--ink-faint);
+  }
+  .q-count b{ color:var(--ink); font-weight:600; }
+
+  .section-tag{
+    font-size: 12.5px;
+    font-weight:700;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    padding: 5px 12px;
+    border-radius: 999px;
+    border:1px solid #bfe3e0;
+  }
+
+  .q-text{
+    font-family:'Cairo', sans-serif;
+    font-weight:700;
+    font-size: clamp(18px, 3.6vw, 21px);
+    color: var(--ink);
+    margin: 4px 0 18px;
+  }
+
+  .code-block{
+    direction: ltr;
+    text-align: left;
+    background: var(--code-bg);
+    color: var(--code-text);
+    font-family:'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height:1.7;
+    padding: 16px 18px;
+    border-radius: var(--radius-sm);
+    margin: 0 0 20px;
+    overflow-x:auto;
+    white-space: pre;
+    position:relative;
+    border: 1px solid #263449;
+  }
+  .code-block::before{
+    content: "C++";
+    position:absolute;
+    top:8px; left:12px;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    color: var(--code-accent);
+    opacity:.65;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding: 0 26px 8px;
+  }
+
+  .opt{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    text-align:right;
+    width:100%;
+    background: var(--surface-soft);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px 15px;
+    font-family:'Tajawal', sans-serif;
+    font-size: 15.5px;
+    color: var(--ink);
+    cursor:pointer;
+    transition: border-color .18s ease, background .18s ease, transform .12s ease;
+  }
+  .opt:hover:not([disabled]){
+    border-color: var(--accent);
+    background: #fff;
+    transform: translateY(-1px);
+  }
+  .opt:active:not([disabled]){ transform: translateY(0); }
+
+  .opt .letter{
+    flex:none;
+    width:28px; height:28px;
+    border-radius: 8px;
+    background: #fff;
+    border:1.5px solid var(--border);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size:13px;
+    color: var(--ink-soft);
+    transition: all .18s ease;
+  }
+  .opt .otext{ flex:1; padding-top:2px; }
+  .opt .icon{ flex:none; font-size:16px; opacity:0; transition: opacity .2s ease; }
+
+  .opt[disabled]{ cursor:default; }
+
+  .opt.is-correct{
+    background: var(--correct-bg);
+    border-color: var(--correct-border);
+    color: var(--accent-ink);
+  }
+  .opt.is-correct .letter{ background: var(--correct); border-color: var(--correct); color:#fff; }
+  .opt.is-correct .icon{ opacity:1; color: var(--correct); }
+
+  .opt.is-wrong{
+    background: var(--wrong-bg);
+    border-color: var(--wrong-border);
+  }
+  .opt.is-wrong .letter{ background: var(--wrong); border-color: var(--wrong); color:#fff; }
+  .opt.is-wrong .icon{ opacity:1; color: var(--wrong); }
+
+  .opt.is-muted{ opacity:.55; }
+
+  /* ---------- Feedback + explanation ---------- */
+  .feedback{
+    margin: 4px 26px 0;
+    max-height:0;
+    overflow:hidden;
+    transition: max-height .4s ease;
+  }
+  .feedback.show{ max-height: 400px; }
+
+  .feedback-inner{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    padding: 15px 16px;
+    border-radius: var(--radius-sm);
+    margin-top: 6px;
+    font-size: 14.5px;
+    line-height:1.75;
+  }
+  .feedback-inner.ok{ background: var(--correct-bg); border:1px solid var(--correct-border); color:#0f5b3f; }
+  .feedback-inner.no{ background: var(--wrong-bg); border:1px solid var(--wrong-border); color:#8a2c22; }
+
+  .feedback-badge{
+    flex:none;
+    font-family:'Cairo', sans-serif;
+    font-weight:800;
+    font-size:13.5px;
+    padding: 4px 10px;
+    border-radius:8px;
+    white-space:nowrap;
+  }
+  .feedback-inner.ok .feedback-badge{ background: var(--correct); color:#fff; }
+  .feedback-inner.no .feedback-badge{ background: var(--wrong); color:#fff; }
+
+  .feedback-text b{ font-weight:700; }
+
+  /* ---------- Footer nav ---------- */
+  .card-foot{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding: 20px 26px 24px;
+    margin-top: 8px;
+  }
+
+  .nav-btn{
+    font-family:'Tajawal', sans-serif;
+    font-weight:700;
+    font-size:14.5px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: none;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    transition: all .18s ease;
+  }
+  .nav-btn:disabled{ opacity:.4; cursor:not-allowed; }
+
+  .btn-ghost{
+    background: var(--surface-soft);
+    color: var(--ink-soft);
+    border: 1.5px solid var(--border);
+  }
+  .btn-ghost:hover:not(:disabled){ border-color: var(--ink-faint); color:var(--ink); }
+
+  .btn-primary{
+    background: linear-gradient(135deg, var(--accent), var(--accent-ink));
+    color:#fff;
+    box-shadow: 0 10px 22px -10px rgba(14,124,134,.55);
+  }
+  .btn-primary:hover:not(:disabled){ filter: brightness(1.06); transform: translateY(-1px); }
+  .btn-primary:disabled{ box-shadow:none; }
+
+  /* ---------- Results screen ---------- */
+  .results{
+    display:none;
+    text-align:center;
+    padding: 40px 26px 34px;
+  }
+  .results.show{ display:block; animation: rise .5s cubic-bezier(.2,.8,.2,1); }
+
+  .ring-wrap{
+    width:172px; height:172px;
+    margin: 0 auto 22px;
+    position:relative;
+  }
+  .ring{
+    width:100%; height:100%;
+    border-radius:50%;
+    background: conic-gradient(var(--accent) calc(var(--pct,0)*1%), var(--surface-soft) 0);
+    display:flex; align-items:center; justify-content:center;
+    transition: background 1s ease;
+  }
+  .ring::after{
+    content:"";
+    position:absolute;
+    inset:12px;
+    background: var(--surface);
+    border-radius:50%;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.05);
+  }
+  .ring-score{
+    position:relative;
+    z-index:1;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .ring-score .num{ font-size: 32px; font-weight:700; color: var(--ink); display:block; }
+  .ring-score .den{ font-size: 13px; color: var(--ink-faint); }
+
+  .results h2{
+    font-family:'Cairo', sans-serif;
+    font-weight:800;
+    font-size: 23px;
+    margin: 0 0 8px;
+  }
+  .results p.msg{
+    color: var(--ink-soft);
+    font-size:15px;
+    max-width: 420px;
+    margin: 0 auto 26px;
+  }
+
+  .results-actions{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  footer.site-foot{
+    text-align:center;
+    margin-top: 26px;
+    color: var(--ink-faint);
+    font-size: 12.5px;
+  }
+
+  /* Focus visibility */
+  .opt:focus-visible, .nav-btn:focus-visible{
+    outline: 2.5px solid var(--accent-2);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: .001s !important; transition-duration: .001s !important; }
+  }
+
+  @media (max-width:560px){
+    .card-top{ padding: 18px 18px 0; }
+    .options{ padding: 0 18px 6px; }
+    .feedback{ margin: 4px 18px 0; }
+    .card-foot{ padding: 16px 18px 20px; }
+    .nav-btn{ padding: 11px 14px; font-size:13.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow-top"><span class="dot"></span> برمجة 2 — المحاضرة 1</div>
+    <h1 class="title">كويز <span>المؤشرات</span> التفاعلي</h1>
+    <p class="subtitle">24 سؤالًا بأسلوب د. أسامه ناصر — إجابة واحدة في كل مرة مع شرح فوري</p>
+  </header>
+
+  <div class="mem-strip-shell">
+    <div class="mem-strip-label">
+      <span>memory&nbsp;address&nbsp;table</span>
+      <span>السؤال <b id="memCurrent">1</b> / <span id="memTotal">24</span></span>
+    </div>
+    <div class="mem-strip" id="memStrip"></div>
+  </div>
+
+  <div class="card" id="quizCard">
+    <div class="card-top">
+      <div class="meta-row">
+        <span class="q-count">السؤال <b id="qIndex">1</b> / <span id="qTotal">24</span></span>
+        <span class="section-tag" id="qSection">القسم الأول</span>
+      </div>
+      <div class="q-text" id="qText"></div>
+      <div class="code-block" id="qCode" style="display:none;"></div>
+    </div>
+
+    <div class="options" id="qOptions"></div>
+
+    <div class="feedback" id="feedback">
+      <div class="feedback-inner" id="feedbackInner">
+        <span class="feedback-badge" id="feedbackBadge"></span>
+        <div class="feedback-text" id="feedbackText"></div>
+      </div>
+    </div>
+
+    <div class="card-foot">
+      <button class="nav-btn btn-ghost" id="prevBtn">→ السابق</button>
+      <button class="nav-btn btn-primary" id="nextBtn" disabled>التالي ←</button>
+    </div>
+
+    <div class="results" id="results">
+      <div class="ring-wrap">
+        <div class="ring" id="ring">
+          <div class="ring-score">
+            <span class="num" id="scoreNum">0/24</span>
+            <span class="den">النتيجة النهائية</span>
+          </div>
+        </div>
+      </div>
+      <h2 id="resultTitle">نتيجتك</h2>
+      <p class="msg" id="resultMsg"></p>
+      <div class="results-actions">
+        <button class="nav-btn btn-primary" id="retakeBtn">إعادة الاختبار من جديد ↻</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-foot">مبني آليًا من محتوى محاضرة المؤشرات — للمراجعة الذاتية فقط</footer>
+</div>
+
+<script>
+const QUESTIONS = [
+  // ---------------- القسم الأول ----------------
+  {
+    section: "القسم الأول: مفهوم المؤشر",
+    q: "المؤشر (Pointer) هو نوع خاص من المتحولات:",
+    code: null,
+    options: {
+      A: "يخزن قيمة عددية فقط",
+      B: "يخزن عنوان مكان تخزين متحول آخر في الذاكرة",
+      C: "يخزن نصًا يمثل اسم المتحول",
+      D: "لا يحتاج إلى تخزين في الذاكرة إطلاقًا"
+    },
+    correct: "B",
+    explain: "كما ورد حرفيًا في المحاضرة، المؤشر «لا يخزن قيمة وإنما يخزن عنوان»، أي مكان تواجد قيمة متحول آخر (تشبيه اللافتة الطرقية)."
+  },
+  {
+    section: "القسم الأول: مفهوم المؤشر",
+    q: "أي من التالي هو الوصف الأدق لدور المؤشر بحسب التشبيه المستخدم في المحاضرة؟",
+    code: null,
+    options: {
+      A: "خزان يحتفظ بالقيمة النهائية",
+      B: "لافتة طرقية تدلّنا على مكان تواجد القيمة",
+      C: "نسخة طبق الأصل عن المتحول الأصلي",
+      D: "دالة تعيد قيمة المتحول"
+    },
+    correct: "B",
+    explain: "استُخدم تشبيه اللافتة الطرقية (Homs/Damascus) في المحاضرة لتوضيح أن المؤشر لا يحمل «الوجهة» (القيمة) بل «الاتجاه» إليها (العنوان)."
+  },
+  {
+    section: "القسم الأول: مفهوم المؤشر",
+    q: "بفرض التصريح التالي: int x = 10; ثم int *y = &x; — العملية & هنا تعني:",
+    code: "int x = 10;\nint *y = &x;",
+    options: {
+      A: "خذ محتوى المتحول x",
+      B: "خذ عنوان الذاكرة الخاص بالمتحول x",
+      C: "احجز ذاكرة جديدة لمتحول اسمه x",
+      D: "قارن بين قيمتين"
+    },
+    correct: "B",
+    explain: "حسب المحاضرة، عملية & (التمرير بالمرجع/أخذ العنوان) «تعني أعطني عنوان الذاكرة الخاص بالمتحول»."
+  },
+  {
+    section: "القسم الأول: مفهوم المؤشر",
+    q: "ضع رمز * قبل اسم المتحول أثناء التعريف (مثل int *y) يؤدي إلى:",
+    code: null,
+    options: {
+      A: "تحويله إلى ثابت (constant)",
+      B: "تحويله إلى مؤشر",
+      C: "حذفه من الذاكرة",
+      D: "مضاعفة قيمته"
+    },
+    correct: "B",
+    explain: "نص المحاضرة: «وضع رمز * قبل اسم المتحول أثناء التعريف يحوله لمؤشر»."
+  },
+
+  // ---------------- القسم الثاني ----------------
+  {
+    section: "القسم الثاني: إدارة الذاكرة (Heap)",
+    q: "بفرض الكود: int x = 10; — عند تحليل الملف التنفيذي (Executable)، فإن القيمة 10 تكون مخزنة مسبقًا ضمن:",
+    code: "int x = 10;",
+    options: {
+      A: "قسم Code",
+      B: "قسم Data",
+      C: "قسم Header فقط",
+      D: "لا تُخزَّن إطلاقًا في الملف التنفيذي"
+    },
+    correct: "B",
+    explain: "المتحولات العادية (غير الديناميكية) تُخزَّن قيمها ضمن قسم data في الملف التنفيذي وتُحمَّل إلى الذاكرة عند فتح البرنامج."
+  },
+  {
+    section: "القسم الثاني: إدارة الذاكرة (Heap)",
+    q: "بفرض الكود: int *y = new int; *y = 10; — هل ستجد القيمة 10 مخزنة ضمن قسم data في الملف التنفيذي؟",
+    code: "int *y = new int;\n*y = 10;",
+    options: {
+      A: "صح",
+      B: "خطأ"
+    },
+    correct: "B",
+    explain: "كما ورد حرفيًا في المحاضرة: «لن نجد القيمة 10 في قسم data في الملف التنفيذي»، لأن هذه القيمة تُخزَّن ديناميكيًا في الكومة (Heap) أثناء التنفيذ فقط، وليست جزءًا من الملف التنفيذي على القرص."
+  },
+  {
+    section: "القسم الثاني: إدارة الذاكرة (Heap)",
+    q: "الكومة (Heap) هي:",
+    code: null,
+    options: {
+      A: "جزء من الملف التنفيذي يحوي الكود المصدري",
+      B: "مجال من الذاكرة يمنحه نظام التشغيل للبرنامج ليحجز ذاكرة جديدة أثناء التنفيذ",
+      C: "نسخة احتياطية من قسم Data",
+      D: "ترويسة الملف التنفيذي (Header)"
+    },
+    correct: "B",
+    explain: "عرّفت المحاضرة الكومة بأنها «مجال من الذاكرة يمنحه نظام التشغيل للبرنامج كي يحجز ذاكرة جديدة أثناء التنفيذ»."
+  },
+  {
+    section: "القسم الثاني: إدارة الذاكرة (Heap)",
+    q: "الكلمة المفتاحية المستخدمة لحجز حجرة ذاكرية جديدة ضمن الكومة (Heap) هي:",
+    code: null,
+    options: {
+      A: "delete",
+      B: "alloc",
+      C: "new",
+      D: "malloc فقط في ++C"
+    },
+    correct: "C",
+    explain: "المحاضرة توضح أن new «تعمل على حجز حجرة ذاكرية ضمن الكومة heap»."
+  },
+  {
+    section: "القسم الثاني: إدارة الذاكرة (Heap)",
+    q: "تسمح لنا المؤشرات بإدارة الذاكرة بشكل مباشر، ويكون ذلك من خلال عمليتي:",
+    code: null,
+    options: {
+      A: "read و write",
+      B: "new و delete",
+      C: "push و pop",
+      D: "open و close"
+    },
+    correct: "B",
+    explain: "نصّت المحاضرة صراحة على أن فائدة المؤشرات تكمن في إمكانية «إنشاء وتدمير مؤشرات أثناء تنفيذ البرنامج» عبر عمليتي الحجز new والتحرير delete."
+  },
+
+  // ---------------- القسم الثالث ----------------
+  {
+    section: "القسم الثالث: العمليتان & و *",
+    q: "بفرض: int x = 10; int *y = &x; — لتغيير القيمة التي يؤشر عليها y (وليس عنوانه)، يجب استخدام:",
+    code: "int x = 10;\nint *y = &x;",
+    options: {
+      A: "y = 20;",
+      B: "*y = 20;",
+      C: "&y = 20;",
+      D: "x.y = 20;"
+    },
+    correct: "B",
+    explain: "المحاضرة توضح أن تغيير القيمة التي يؤشر عليها المؤشر يتطلب عملية Dereferencing باستخدام الرمز *. أما y = 20; فتُغيّر عنوان المؤشر نفسه (خطير) لا قيمة x."
+  },
+  {
+    section: "القسم الثالث: العمليتان & و *",
+    q: "ما ناتج تنفيذ البرنامج التالي؟",
+    code: "int main(){\n    int x = 10;\n    int *y = &x;\n    (*y)++;\n    cout << x << \" \" << *y;\n}",
+    options: {
+      A: "10 10",
+      B: "11 11",
+      C: "10 11",
+      D: "خطأ ترجمة"
+    },
+    correct: "B",
+    explain: "(*y)++ يزيد القيمة التي يؤشر عليها y (أي x نفسها) بمقدار 1، فتصبح x تساوي 11، وبالتالي فإن *y تساوي أيضًا 11 لأنهما يشيران لنفس الخانة الذاكرية."
+  },
+  {
+    section: "القسم الثالث: العمليتان & و *",
+    q: "بفرض: int a = 7; int *aPtr = &a; — أي التعابير التالية يساوي قيمة aPtr (أي عنوان a)؟",
+    code: "int a = 7;\nint *aPtr = &a;",
+    options: {
+      A: "*aPtr",
+      B: "&*aPtr",
+      C: "a",
+      D: "*&a"
+    },
+    correct: "B",
+    explain: "&*aPtr تعني «خذ عنوان المحتوى الذي يؤشر عليه aPtr»، وبما أن aPtr يؤشر على a، فإن الناتج هو عنوان a، وهو نفسه القيمة المخزنة في aPtr. العمليتان & و * متعاكستان كما ورد نصًا في المحاضرة."
+  },
+  {
+    section: "القسم الثالث: العمليتان & و *",
+    q: "ما ناتج تنفيذ البرنامج التالي؟",
+    code: "int main(){\n    int a = 7;\n    int *aPtr = &a;\n    cout << *&a;\n}",
+    options: {
+      A: "عنوان a",
+      B: "7",
+      C: "عنوان aPtr",
+      D: "خطأ ترجمة"
+    },
+    correct: "B",
+    explain: "&a تعطي عنوان a، ثم * تُرجع محتوى ذلك العنوان أي قيمة a نفسها = 7. هذا مطابق للمبدأ الذي شرحته المحاضرة في مثال *&aPtr."
+  },
+
+  // ---------------- القسم الرابع ----------------
+  {
+    section: "القسم الرابع: التمرير بالقيمة/المرجع/المؤشر",
+    q: "بفرض التوابع الثلاثة التالية، أي التوابع لا يُعدّل على قيمة المتحول الأصلي خارج التابع؟",
+    code: "int f1(int n){ n = n*n*n; return n; }\nint f2(int &n){ n = n*n*n; return n; }\nint f3(int *n){ *n = *n * *n * *n; return n; }",
+    options: {
+      A: "f1 فقط",
+      B: "f2 فقط",
+      C: "f3 فقط",
+      D: "f1 و f3 معًا"
+    },
+    correct: "A",
+    explain: "f1 يستقبل نسخة من القيمة (تمرير بالقيمة)، فأي تعديل عليها محلي فقط. أما f2 (تمرير بالمرجع) و f3 (تمرير بمؤشر مع Dereferencing عبر *n) فكلاهما يُعدّلان على المتحول الأصلي فعليًا."
+  },
+  {
+    section: "القسم الرابع: التمرير بالقيمة/المرجع/المؤشر",
+    q: "في التابع f3(int *n) أعلاه، لو استبدلنا *n = *n * *n * *n; بالسطر n = n*n*n; (دون استخدام *)، فإن هذا الكود:",
+    code: "int f3(int *n){\n    n = n*n*n;   // بدون استخدام *\n    return n;\n}",
+    options: {
+      A: "سيُترجم بنجاح وسيُعدّل قيمة المتحول الأصلي كالسابق تمامًا",
+      B: "سيُترجم بنجاح لكنه سيُغيّر قيمة المؤشر (العنوان) وليس المتحول الأصلي",
+      C: "خطأ ترجمة حتمًا",
+      D: "سيحذف المتحول الأصلي من الذاكرة"
+    },
+    correct: "B",
+    explain: "بحسب «نقاط عامة» في المحاضرة، في حال غيّرنا قيمة المؤشر نفسه (بدل ما يؤشر إليه عبر *)، فإن المتحول الأصلي لن يتأثر بأي شيء؛ لأننا غيّرنا «أين يشير المؤشر» لا «القيمة في تلك الخانة»."
+  },
+  {
+    section: "القسم الرابع: التمرير بالقيمة/المرجع/المؤشر",
+    q: "ما ناتج تنفيذ البرنامج التالي؟",
+    code: "void update(int *n){ *n = *n + 10; }\nint main(){\n    int x = 5;\n    update(&x);\n    cout << x;\n}",
+    options: {
+      A: "5",
+      B: "15",
+      C: "عنوان x",
+      D: "خطأ ترجمة"
+    },
+    correct: "B",
+    explain: "تم تمرير عنوان x إلى التابع، وبداخله جرى تعديل محتوى ذلك العنوان عبر *n، لذا فإن x الأصلية تتغير فعليًا لتصبح 15."
+  },
+  {
+    section: "القسم الرابع: التمرير بالقيمة/المرجع/المؤشر",
+    q: "ما ناتج تنفيذ البرنامج التالي؟",
+    code: "void update(int n){ n = n + 10; }\nint main(){\n    int x = 5;\n    update(x);\n    cout << x;\n}",
+    options: {
+      A: "5",
+      B: "15",
+      C: "عنوان x",
+      D: "قيمة عشوائية"
+    },
+    correct: "A",
+    explain: "التمرير هنا بالقيمة (Pass by Value)؛ التابع يستقبل نسخة من x، وأي تعديل عليها لا ينعكس على x الأصلية خارج التابع."
+  },
+  {
+    section: "القسم الرابع: التمرير بالقيمة/المرجع/المؤشر",
+    q: "بفرض: int x, y; int *xptr = &x, *yptr = &y; — هل تكون xptr == yptr؟",
+    code: "int x, y;\nint *xptr = &x, *yptr = &y;",
+    options: {
+      A: "نعم دائمًا؛ لأن x و y من نفس النوع",
+      B: "لا؛ لأن x و y متحولان مختلفان لهما عنوانان مختلفان في الذاكرة",
+      C: "خطأ ترجمة، لا يمكن مقارنة مؤشرين",
+      D: "يعتمد على قيمة x و y فقط"
+    },
+    correct: "B",
+    explain: "كل متحول محلي منفصل يُحجز له مكان مستقل في الذاكرة (على المكدس Stack)، وبالتالي فإن عنوانيهما (وبالتالي قيمتا المؤشرين) مختلفان حتمًا، بغض النظر عن قيمتيهما."
+  },
+
+  // ---------------- القسم الخامس ----------------
+  {
+    section: "القسم الخامس: حجم المؤشر",
+    q: "حجم المؤشر (بالبايت) في لغة ++C يعتمد بشكل أساسي على:",
+    code: null,
+    options: {
+      A: "نوع البيانات الذي يؤشر عليه المؤشر (int، float، ...)",
+      B: "المعالج ونظام التشغيل / إعدادات الترجمة (32 بت أو 64 بت)",
+      C: "قيمة المتحول المخزنة في العنوان",
+      D: "عدد المؤشرات المُعرّفة في البرنامج"
+    },
+    correct: "B",
+    explain: "أوضحت المحاضرة أن حجم المؤشر مرتبط بعدة عوامل أهمها المعالج ونظام التشغيل: معالجات 32 بت تُمثّل المؤشر بـ 4 بايت، بينما معالجات 64 بت تحتاج 8 بايت — بغض النظر عن نوع البيانات المؤشَّر إليها."
+  },
+  {
+    section: "القسم الخامس: حجم المؤشر",
+    q: "بفرض الكود التالي، وتمت ترجمته باستخدام الأمر g++ p.cpp -m32 (استهداف بيئة 32 بت)، ما الناتج الأرجح؟",
+    code: "int main(){\n    int a = 7;\n    int *aPtr = &a;\n    cout << sizeof(aPtr) << \" Bytes\" << endl;\n    return 0;\n}",
+    options: {
+      A: "8 Bytes",
+      B: "4 Bytes",
+      C: "16 Bytes",
+      D: "2 Bytes"
+    },
+    correct: "B",
+    explain: "عند تحديد استهداف الترجمة لبيئة 32 بت (-m32)، يُصبح حجم أي مؤشر 4 بايت (32 بت)، بينما بدون هذا الخيار (بيئة 64 بت الافتراضية) يكون الناتج 8 Bytes."
+  },
+  {
+    section: "القسم الخامس: حجم المؤشر",
+    q: "هل حجم المؤشر لمتحول من نوع int* يساوي حجم المؤشر لمتحول من نوع char* على نفس الجهاز ونفس إعدادات الترجمة؟",
+    code: null,
+    options: {
+      A: "صح",
+      B: "خطأ"
+    },
+    correct: "A",
+    explain: "حجم المؤشر كمتحول هو ثابت لكل المؤشرات على نفس المعالج ونفس وضع الترجمة (32/64 بت)، بغض النظر عن نوع البيانات المؤشَّر عليها؛ فالمؤشر دائمًا يخزّن «عنوانًا» وليس «قيمة من نوع معين»."
+  },
+
+  // ---------------- القسم السادس ----------------
+  {
+    section: "القسم السادس: مخاطر المؤشرات",
+    q: "القيمة NULL أو 0 عند إسنادها لمؤشر تعني أن المؤشر يشير إلى مكان محدد وصالح في الذاكرة.",
+    code: null,
+    options: {
+      A: "صح",
+      B: "خطأ"
+    },
+    correct: "B",
+    explain: "ورد في «نقاط عامة» أن القيمة NULL/0 «تشير إلى اللاشيء»، أي أن المؤشر لا يشير حاليًا لأي متحول صالح في الذاكرة."
+  },
+  {
+    section: "القسم السادس: مخاطر المؤشرات",
+    q: "التعامل مع المؤشرات يمنح المبرمج قوة كبيرة في إدارة الذاكرة، لكنه في المقابل قد يُسبب أخطاء ليس لها بداية أو نهاية واضحة إن لم يُستخدم بحذر.",
+    code: null,
+    options: {
+      A: "صح",
+      B: "خطأ"
+    },
+    correct: "A",
+    explain: "هذا مطابق حرفيًا لما ورد في شريحة «نقاط عامة»: «لكنه أيضًا يعطي إمكانية أخطاء لها أول ما لها آخر» — إشارة إلى مخاطر المؤشرات (Dangling pointers، تسريب الذاكرة، إلخ)."
+  },
+  {
+    section: "القسم السادس: مخاطر المؤشرات",
+    q: "بفرض: int *y; تم تعريف المؤشر دون تهيئته بأي عنوان، ثم نُفّذ الأمر cout << *y; مباشرة. ما الأقرب لوصف سلوك هذا الكود؟",
+    code: "int *y;\ncout << *y;   // دون تهيئة y",
+    options: {
+      A: "سيطبع 0 دائمًا وبأمان تام",
+      B: "سلوك غير مُعرَّف (قد يطبع قيمة عشوائية أو يسبب خطأ تنفيذ Crash)",
+      C: "خطأ ترجمة حتمًا",
+      D: "يُهيَّأ المؤشر تلقائيًا للإشارة إلى x"
+    },
+    correct: "B",
+    explain: "مؤشر غير مُهيَّأ يحتوي على قيمة عشوائية (Garbage) كعنوان، ومحاولة الوصول لمحتواه (Dereferencing) عبر *y يُعد من أخطر مخاطر المؤشرات التي حذّرت منها المحاضرة، وينتج عنها سلوك غير معرَّف."
+  }
+];
+
+// ---------------- State ----------------
+const TOTAL = QUESTIONS.length;
+let current = 0;
+let answers = new Array(TOTAL).fill(null); // stores chosen letter or null
+
+// ---------------- DOM refs ----------------
+const memStrip = document.getElementById('memStrip');
+const memCurrent = document.getElementById('memCurrent');
+const memTotal = document.getElementById('memTotal');
+const qIndex = document.getElementById('qIndex');
+const qTotal = document.getElementById('qTotal');
+const qSection = document.getElementById('qSection');
+const qText = document.getElementById('qText');
+const qCode = document.getElementById('qCode');
+const qOptions = document.getElementById('qOptions');
+const feedback = document.getElementById('feedback');
+const feedbackInner = document.getElementById('feedbackInner');
+const feedbackBadge = document.getElementById('feedbackBadge');
+const feedbackText = document.getElementById('feedbackText');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const results = document.getElementById('results');
+const cardTop = document.querySelector('.card-top');
+const optionsWrap = document.getElementById('qOptions');
+const cardFoot = document.querySelector('.card-foot');
+
+memTotal.textContent = TOTAL;
+qTotal.textContent = TOTAL;
+
+// build memory strip cells
+function toHex(i){ return '0x' + i.toString(16).padStart(2,'0').toUpperCase(); }
+QUESTIONS.forEach((_, i) => {
+  const c = document.createElement('div');
+  c.className = 'cell';
+  c.title = toHex(i);
+  memStrip.appendChild(c);
+});
+
+function updateMemStrip(){
+  const cells = memStrip.children;
+  for(let i=0;i<TOTAL;i++){
+    cells[i].classList.remove('current','correct','wrong','seen');
+    if(answers[i] !== null){
+      const isCorrect = answers[i] === QUESTIONS[i].correct;
+      cells[i].classList.add(isCorrect ? 'correct' : 'wrong');
+    }
+    if(i === current) cells[i].classList.add('current');
+  }
+  memCurrent.textContent = current + 1;
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[current];
+  qIndex.textContent = current + 1;
+  qSection.textContent = q.section.split(':')[0].trim();
+  qText.textContent = q.q;
+
+  if(q.code){
+    qCode.style.display = 'block';
+    qCode.textContent = q.code;
+  } else {
+    qCode.style.display = 'none';
+    qCode.textContent = '';
+  }
+
+  qOptions.innerHTML = '';
+  Object.keys(q.options).forEach(letter => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.dataset.letter = letter;
+    btn.innerHTML = `<span class="letter">${letter}</span><span class="otext">${q.options[letter]}</span><span class="icon"></span>`;
+    btn.addEventListener('click', () => selectAnswer(letter));
+    qOptions.appendChild(btn);
+  });
+
+  // restore previous state if answered
+  const prevAns = answers[current];
+  if(prevAns !== null){
+    lockOptions(prevAns);
+    showFeedback(prevAns);
+    nextBtn.disabled = (current === TOTAL - 1);
+  } else {
+    feedback.classList.remove('show');
+    nextBtn.disabled = true;
+  }
+
+  prevBtn.disabled = (current === 0);
+  updateMemStrip();
+
+  results.classList.remove('show');
+  cardTop.style.display = '';
+  optionsWrap.style.display = '';
+  cardFoot.style.display = '';
+}
+
+function lockOptions(chosenLetter){
+  const q = QUESTIONS[current];
+  const btns = qOptions.querySelectorAll('.opt');
+  btns.forEach(b => {
+    b.disabled = true;
+    const letter = b.dataset.letter;
+    if(letter === q.correct){
+      b.classList.add('is-correct');
+      b.querySelector('.icon').textContent = '✓';
+    } else if(letter === chosenLetter){
+      b.classList.add('is-wrong');
+      b.querySelector('.icon').textContent = '✗';
+    } else {
+      b.classList.add('is-muted');
+    }
+  });
+}
+
+function showFeedback(chosenLetter){
+  const q = QUESTIONS[current];
+  const isCorrect = chosenLetter === q.correct;
+  feedback.classList.add('show');
+  feedbackInner.className = 'feedback-inner ' + (isCorrect ? 'ok' : 'no');
+  feedbackBadge.textContent = isCorrect ? 'إجابة صحيحة ✓' : 'إجابة خاطئة ✗';
+  feedbackText.innerHTML = `<b>الشرح:</b> ${q.explain}`;
+}
+
+function selectAnswer(letter){
+  if(answers[current] !== null) return; // already answered
+  answers[current] = letter;
+  lockOptions(letter);
+  showFeedback(letter);
+  updateMemStrip();
+  nextBtn.disabled = false;
+}
+
+prevBtn.addEventListener('click', () => {
+  if(current > 0){
+    current--;
+    renderQuestion();
+  }
+});
+
+nextBtn.addEventListener('click', () => {
+  if(current < TOTAL - 1){
+    current++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+});
+
+function computeScore(){
+  let score = 0;
+  answers.forEach((a,i) => { if(a === QUESTIONS[i].correct) score++; });
+  return score;
+}
+
+function showResults(){
+  const score = computeScore();
+  const pct = Math.round((score / TOTAL) * 100);
+
+  cardTop.style.display = 'none';
+  optionsWrap.style.display = 'none';
+  feedback.classList.remove('show');
+  cardFoot.style.display = 'none';
+  results.classList.add('show');
+
+  document.getElementById('scoreNum').textContent = `${score}/${TOTAL}`;
+  document.getElementById('ring').style.setProperty('--pct', pct);
+
+  let title, msg;
+  if(pct >= 90){ title = 'ممتاز! إتقان تام 🎯'; msg = 'أنت تتحكم بمفاهيم المؤشرات بشكل ممتاز. جاهز للانتقال إلى المحاضرة التالية بثقة.'; }
+  else if(pct >= 70){ title = 'جيد جدًا 👏'; msg = 'فهمك للمؤشرات جيد، راجع الأسئلة التي أخطأت بها لتثبيت الفكرة كاملة.'; }
+  else if(pct >= 50){ title = 'مقبول، يحتاج مراجعة 📘'; msg = 'هناك بعض النقاط غير الواضحة بعد. يُنصح بإعادة قراءة شرائح Heap والعمليتين & و* .'; }
+  else { title = 'يلزم مراجعة شاملة 🔁'; msg = 'راجع المحاضرة من البداية مع التركيز على تعريف المؤشر، إدارة الذاكرة، وعملية Dereferencing.'; }
+
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultMsg').textContent = msg;
+
+  // mark last cell current off
+  const cells = memStrip.children;
+  for(let i=0;i<TOTAL;i++) cells[i].classList.remove('current');
+}
+
+document.getElementById('retakeBtn').addEventListener('click', () => {
+  answers = new Array(TOTAL).fill(null);
+  current = 0;
+  renderQuestion();
+});
+
+// keyboard support: 1-4 for options, arrows for nav
+document.addEventListener('keydown', (e) => {
+  if(results.classList.contains('show')) return;
+  const map = {'1':'A','2':'B','3':'C','4':'D'};
+  if(map[e.key] && QUESTIONS[current].options[map[e.key]] !== undefined){
+    selectAnswer(map[e.key]);
+  } else if(e.key === 'ArrowRight' && !prevBtn.disabled){
+    prevBtn.click();
+  } else if(e.key === 'ArrowLeft' && !nextBtn.disabled){
+    nextBtn.click();
+  }
+});
+
+renderQuestion();
+</script>
+
+</body>
+</html>
