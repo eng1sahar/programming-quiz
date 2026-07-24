@@ -3,145 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>منصة اختبارات البرمجة الشاملة</title>
-  <!-- مكتبات التنسيق وقراءة الـ MD -->
+  <title>منصة التفاعلية للمحاضرات</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
+      --bg: #0f172a;
+      --card: #1e293b;
       --accent: #38bdf8;
       --text: #f8fafc;
       --correct: #22c55e;
       --wrong: #ef4444;
     }
 
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-    body { margin: 0; background-color: var(--bg-color); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+    * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-    /* القائمة الجانبية */
-    #sidebar { width: 260px; background-color: #020617; border-left: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-    #sidebar h2 { color: var(--accent); font-size: 1.2rem; margin: 0 0 10px 0; }
-    .lec-btn { background: #1e293b; color: white; border: 1px solid #334155; padding: 10px 15px; border-radius: 8px; cursor: pointer; text-align: right; transition: all 0.2s; }
+    #sidebar { width: 250px; background: #020617; border-left: 1px solid #334155; padding: 15px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+    #sidebar h3 { color: var(--accent); margin-top: 0; text-align: center; }
+    .lec-btn { background: #1e293b; color: white; border: 1px solid #334155; padding: 10px; border-radius: 8px; cursor: pointer; text-align: right; transition: 0.2s; }
     .lec-btn:hover, .lec-btn.active { background: var(--accent); color: #000; font-weight: bold; }
 
-    /* منطقة المحتوى الرئيسية */
-    #main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    #header { padding: 15px 25px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; background: #0f172a; }
-    .progress-bar-container { width: 200px; background: #334155; height: 10px; border-radius: 5px; overflow: hidden; }
-    #progress-fill { width: 0%; height: 100%; background: var(--correct); transition: width 0.3s; }
+    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #header { padding: 15px 20px; border-bottom: 1px solid #334155; background: #0f172a; display: flex; justify-content: space-between; align-items: center; }
 
-    /* الشاشة المقسومة */
-    #workspace { flex: 1; display: flex; overflow: hidden; padding: 20px; gap: 20px; }
-    #code-panel { flex: 1; background: #000; border: 1px solid #334155; border-radius: 12px; padding: 15px; overflow-auto; font-family: monospace; display: none; }
-    #question-panel { flex: 1; background: var(--card-bg); border-radius: 12px; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #334155; }
+    #workspace { flex: 1; display: flex; padding: 20px; gap: 20px; overflow: hidden; }
+    #code-panel { flex: 1; background: #000; border: 1px solid #334155; border-radius: 12px; padding: 15px; overflow-y: auto; display: none; direction: ltr; text-align: left; }
+    #quiz-panel { flex: 1; background: var(--card); border: 1px solid #334155; border-radius: 12px; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; justify-content: space-between; }
 
-    /* خيارات MCQ */
-    .option-btn { width: 100%; text-align: right; background: #334155; color: white; border: none; padding: 12px 18px; margin: 8px 0; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 1rem; }
+    .q-card { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #334155; }
+    .q-title { font-size: 1.1rem; color: var(--accent); margin-bottom: 12px; }
+
+    .option-btn { width: 100%; text-align: right; background: #334155; color: white; border: none; padding: 12px; margin: 5px 0; border-radius: 6px; cursor: pointer; font-size: 0.95rem; }
     .option-btn:hover { background: #475569; }
     .option-btn.selected { border: 2px solid var(--accent); }
     .option-btn.correct { background: var(--correct) !important; color: white; }
     .option-btn.wrong { background: var(--wrong) !important; color: white; }
 
-    #explanation { margin-top: 15px; padding: 12px; border-radius: 8px; background: #0f172a; display: none; }
-    .controls { display: flex; gap: 10px; margin-top: 20px; }
-    .nav-btn { flex: 1; padding: 10px; border-radius: 6px; border: none; background: var(--accent); font-weight: bold; cursor: pointer; }
-    #loading { text-align: center; margin-top: 50px; font-size: 1.2rem; color: var(--accent); }
+    .explanation { margin-top: 10px; padding: 10px; background: #0f172a; border-radius: 6px; border-right: 4px solid var(--accent); display: none; }
+    .check-btn { background: var(--accent); border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
   </style>
 </head>
 <body>
 
-  <!-- القائمة الجانبية للمحاضرات -->
   <div id="sidebar">
-    <h2>المحاضرات (1-12)</h2>
-    <div id="lec-list" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto;"></div>
+    <h3>المحاضرات</h3>
+    <div id="lec-btns"></div>
   </div>
 
-  <!-- المنطقة الرئيسية -->
-  <div id="main-content">
+  <div id="main">
     <div id="header">
-      <h3 id="current-title">اختر محاضرة للبدء</h3>
-      <div>
-        <span id="score-text">الإنجاز: 0%</span>
-        <div class="progress-bar-container"><div id="progress-fill"></div></div>
-      </div>
+      <h2 id="title" style="margin:0;">اختر محاضرة للبدء</h2>
     </div>
 
-    <!-- الشاشة المقسومة للأسئلة والأكواد -->
     <div id="workspace">
       <div id="code-panel">
-        <h4 style="color:var(--accent); margin-top:0;">الكود البرمجي المتعلق بالسؤال:</h4>
-        <div id="code-content"></div>
+        <pre><code id="code-text"></code></pre>
       </div>
 
-      <div id="question-panel">
-        <div id="quiz-container">
-          <div id="loading">يرجى اختيار محاضرة من القائمة الجانبية...</div>
-          <div id="q-content" style="display:none;">
-            <h3 id="q-text"></h3>
-            <div id="options-container"></div>
-            <div id="explanation"></div>
-          </div>
-        </div>
-
-        <div class="controls" id="nav-controls" style="display:none;">
-          <button class="nav-btn" onclick="prevQuestion()">السابق</button>
-          <button class="nav-btn" onclick="checkAnswer()">تأكيد الإجابة</button>
-          <button class="nav-btn" onclick="nextQuestion()">التالي</button>
-        </div>
+      <div id="quiz-panel">
+        <div id="questions-container">اختر محاضرة من القائمة الجانبية ليتم استخراج الأسئلة فوراً...</div>
       </div>
     </div>
   </div>
 
   <script>
-    // إنشاء أزرار المحاضرات
-    const lecList = document.getElementById('lec-list');
-    for (let i = 1; i <= 12; i++) {
+    const container = document.getElementById('lec-btns');
+    for(let i=1; i<=12; i++) {
       const btn = document.createElement('button');
       btn.className = 'lec-btn';
       btn.innerText = `المحاضرة ${i}`;
-      btn.onclick = () => loadLecture(i);
-      lecList.appendChild(btn);
+      btn.onclick = () => loadLec(i);
+      container.appendChild(btn);
     }
 
-    let currentQuestions = [];
-    let currentIndex = 0;
-    let selectedOption = null;
-    let score = 0;
+    async function loadLec(num) {
+      document.getElementById('title').innerText = `المحاضرة ${num}`;
+      const qContainer = document.getElementById('questions-container');
+      qContainer.innerHTML = 'جاري تحليل الأسئلة...';
 
-    // جلب ملف الـ MD الخاص بالمحاضرة تلقائياً من الملفات المرفوعة
-    async function loadLecture(num) {
-      document.getElementById('loading').style.display = 'block';
-      document.getElementById('q-content').style.display = 'none';
-      document.getElementById('nav-controls').style.display = 'none';
-      document.getElementById('current-title').innerText = `المحاضرة ${num}`;
-      
       try {
-        const response = await fetch(`lec${num}.md`);
-        if (!response.ok) throw new Error("لم يتم العثور على ملف المحاضرة");
-        const text = await response.text();
-        parseMarkdownQuiz(text);
-      } catch (err) {
-        document.getElementById('loading').innerText = `تعذر تحميل lec${num}.md - تأكد من رفع الملف بنفس الاسم على GitHub!`;
+        const res = await fetch(`lec${num}.md`);
+        const text = await res.text();
+        parseSmartQuiz(text);
+      } catch(e) {
+        qContainer.innerHTML = 'خطأ في تحميل الملف.';
       }
     }
 
-    // تحليل نص الـ Markdown وتحويله لأسئلة
-    function parseMarkdownQuiz(mdText) {
-      // تحويل بسيط لنص Markdown
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('q-content').style.display = 'block';
-      document.getElementById('nav-controls').style.display = 'flex';
-      
-      // هنا يتم عرض محتوى الـ MD
-      const htmlContent = marked.parse(mdText);
-      document.getElementById('q-text').innerHTML = htmlContent;
-      document.getElementById('code-panel').style.display = 'none'; // يعود ملء الشاشة إذا لم يوجد كود منفصل
+    function parseSmartQuiz(text) {
+      const qContainer = document.getElementById('questions-container');
+      qContainer.innerHTML = '';
+
+      // البحث عن الأكواد البرمجية بالملف
+      const codeMatch = text.match(/```[\s\S]*?```/g);
+      const codePanel = document.getElementById('code-panel');
+      if (codeMatch) {
+        codePanel.style.display = 'block';
+        document.getElementById('code-text').innerText = codeMatch.join('\n\n').replace(/```/g, '');
+      } else {
+        codePanel.style.display = 'none';
+      }
+
+      // تقسيم النصوص بأسلوب الأسئلة
+      const blocks = text.split(/(?=السؤال\s*\d+|Question\s*\d+)/i);
+
+      blocks.forEach((block, idx) => {
+        if(!block.trim()) return;
+
+        const card = document.createElement('div');
+        card.className = 'q-card';
+
+        // استخراج الإجابة الصحيحة إذا وجدت
+        const correctMatch = block.match(/الإجابة الصحيحة:\s*([A-D])/i);
+        const correctAnswer = correctMatch ? correctMatch[1].toUpperCase() : null;
+
+        // تنظيف النص وتجهيزه
+        let cleanText = marked.parse(block);
+        card.innerHTML = cleanText;
+
+        // تحويل الخيارات إلى أزرار تفاعلية تلقائياً
+        const lines = block.split('\n');
+        let optionsHtml = '';
+        lines.forEach(line => {
+          const optMatch = line.match(/^([A-D])[-.\)]\s*(.*)/i);
+          if (optMatch) {
+            const letter = optMatch[1].toUpperCase();
+            const optContent = optMatch[2];
+            optionsHtml += `<button class="option-btn" data-letter="${letter}" onclick="selectOpt(this)">${letter}- ${optContent}</button>`;
+          }
+        });
+
+        if (optionsHtml) {
+          // استبدال النص العادي بالأزرار التفاعلية
+          const optDiv = document.createElement('div');
+          optDiv.innerHTML = optionsHtml;
+          
+          const confirmBtn = document.createElement('button');
+          confirmBtn.className = 'check-btn';
+          confirmBtn.innerText = 'تأكيد الإجابة';
+          confirmBtn.onclick = () => checkOpt(card, correctAnswer);
+
+          card.appendChild(optDiv);
+          card.appendChild(confirmBtn);
+        }
+
+        qContainer.appendChild(card);
+      });
     }
 
-    function prevQuestion() { alert("تستطيع القراءة المباشرة والتنقل بالصفحة"); }
-    function nextQuestion() { alert("تستطيع القراءة المباشرة والتنقل بالصفحة"); }
-    function checkAnswer() { }
+    function selectOpt(btn) {
+      const parent = btn.parentElement;
+      parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+
+    function checkOpt(card, correctLetter) {
+      const selected = card.querySelector('.option-btn.selected');
+      if (!selected) { alert('الرجاء اختيار إجابة أولاً!'); return; }
+
+      const userChoice = selected.getAttribute('data-letter');
+      const allOptions = card.querySelectorAll('.option-btn');
+
+      allOptions.forEach(opt => {
+        const letter = opt.getAttribute('data-letter');
+        if (letter === correctLetter) {
+          opt.classList.add('correct');
+        } else if (letter === userChoice && userChoice !== correctLetter) {
+          opt.classList.add('wrong');
+        }
+      });
+    }
   </script>
 </body>
 </html>
