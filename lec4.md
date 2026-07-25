@@ -217,12 +217,11 @@ D- لأن ++C لا تدعم عامل `*` مع السجلات
 
 A- `Complex a;`
 B- `Complex array[10];`
-C- `Complex ptr=&a;`
+C- `Complex *ptr=&a;`
 D- `Complex ptrN=new Complex;`
 
 **الإجابة الصحيحة: D**
-**الشرح:** العبارة `Complex ptrN=new Complex;` خاطئة لأن `new Complex` تعيد **مؤشرًا** من نوع `Complex*`، وبالتالي يجب أن يكون التعريف `Complex* ptrN=new Complex;` وليس `Complex ptrN`. (وبالمثل C يجب أن تكون `Complex* ptr=&a;`).
-
+**الشرح:** العبارة `Complex ptrN=new Complex;` خاطئة لأن `new Complex` تعيد **مؤشرًا** من نوع `Complex*`، وبالتالي يجب أن يكون التعريف `Complex* ptrN=new Complex;` وليس complex ptrN .
 ---
 
 ### السؤال 14
