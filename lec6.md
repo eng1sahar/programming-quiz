@@ -130,16 +130,16 @@ D- القسمة
 
 بفرض لدينا البنية التالية والتي سيُعتمد عليها في عدة أسئلة لاحقة:
 
-```cpp
+```
+### السؤال 8
+cpp
 struct Student{
     long id;
     char firstName[20];
     char lastName[20];
     float points;
 };
-```
 
-### السؤال 8
 لماذا اعتُمد في البنية `Student` على `char firstName[20]` بدلاً من الصف `string`؟
 
 A- لأن `string` غير مدعوم في ++C أساساً
