@@ -132,13 +132,13 @@ D- القسمة
 
 ```
 ### السؤال 8
-cpp
+```cpp
 struct Student{
     long id;
     char firstName[20];
     char lastName[20];
     float points;
-};
+};```
 
 لماذا اعتُمد في البنية `Student` على `char firstName[20]` بدلاً من الصف `string`؟
 
